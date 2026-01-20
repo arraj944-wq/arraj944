@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Azon Store</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <audio controls>
+         <source src="C:\Users\HP\OneDrive\Desktop\socal midia\From The Start.mp3" type="audio/mpeg">
+       </audio>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#eaeded;}
+.header{background:#121921;color:white;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;}
+.logo{color:#ff9900;font-size:24px;font-weight:bold;}
+.header button{background:#f8f8f8;border:none;padding:8px 14px;font-weight:bold;cursor:pointer;}
+.container{padding:20px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;}
+.product{background:white;padding:15px;border-radius:6px;text-align:center;box-shadow:0 0 10px rgba(0,0,0,.1);}
+.product img{width:100%;height:200px;object-fit:cover;border-radius:4px;}
+.price{color:#04fae5;font-size:18px;margin:10px 0;}
+.product button{width:100%;padding:10px;background:#ffd814;border:none;font-weight:bold;cursor:pointer;}
+#cart,#orders{display:none;}
+.cart-item{background:white;padding:10px;margin-bottom:10px;border-radius:4px;display:flex;justify-content:space-between;}
+.total{font-size:20px;font-weight:bold;margin-top:15px;}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="logo">Azon</div>
+  <div>
+    <button onclick="showCart()">Cart</button>
+    <button onclick="showOrders()">Orders</button>
+  </div>
+</div>
+
+<div class="container" id="store">
+  <div class="grid">
+
+   <div class="product">
+  <img src="cap.jpg" alt="Cap">
+  <h3>Cap</h3>
+  <div class="price">$9.99</div>
+  <button onclick="addToCart('Cap',9.99)">Add to Cart</button>
+</div>
+
+    <div class="product">
+      <img src="C:\Users\HP\OneDrive\Desktop\photos\pants.jpg"">
+      <h3>Pants</h3>
+      <div class="price">$29.99</div>
+      <button onclick="addToCart('Pants',29.99)">Add to Cart</button>
+    </div>
+
+    <div class="product">
+      <img src= "C:\Users\HP\OneDrive\Desktop\photos\shirts.jpg">
+      <h3>T-Shirt</h3>
+      <div class="price">$14.99</div>
+      <button onclick="addToCart('T-Shirt',14.99)">Add to Cart</button>
+    </div>
+
+    <div class="product">
+      <img src="C:\Users\HP\OneDrive\Desktop\photos\wood.jpg">
+      <h3>Shoes</h3>
+      <div class="price">$149.99</div>
+      <button onclick="addToCart('Shoes',49.99)">Add to Cart</button>
+    </div>
+
+   <div class="product">
+  <img src="shopping.webp" alt="Watch">
+  <h3>Watch</h3>
+  <div class="price">$179.99</div>
+  <button onclick="addToCart('Watch',79.99)">Add to Cart</button>
+</div>
+
+  </div>
+</div>
+
+<div class="container" id="cart">
+  <h2>Your Cart</h2>
+  <div id="cartItems"></div>
+  <div class="total" id="total"></div>
+  <button onclick="checkout()">Checkout</button>
+  <button onclick="back()">Back</button>
+</div>
+
+<div class="container" id="orders">
+  <h2>Order History</h2>
+  <div id="orderList"></div>
+  <button onclick="back()">Back</button>
+</div>
+
+<script>
+const store = document.getElementById("store");
+const cartDiv = document.getElementById("cart");
+const ordersDiv = document.getElementById("orders");
+const cartItems = document.getElementById("cartItems");
+const orderList = document.getElementById("orderList");
+const totalDiv = document.getElementById("total");
+
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let orders = JSON.parse(localStorage.getItem("orders")) || [];
+
+
+function addToCart(name, price) {
+  const existing = cart.find(item => item.name === name);
+
+  if (existing) {
+    existing.qty++;
+  } else {
+    cart.push({ name, price, qty: 1 });
+  }
+
+  saveCart();
+  alert("Added to cart");
+}
+
+function removeItem(name) {
+  cart = cart.filter(item => item.name !== name);
+  saveCart(10);
+  renderCart();
+}
+
+function changeQty(name, amount) {
+  const item = cart.find(i => i.name === name);
+  if (!item) return;
+
+  item.qty += amount;
+
+  if (item.qty <= 0) {
+    removeItem(name);
+  } else {
+    saveCart();
+    renderCart();
+  }
+}
+
+function saveCart() {
+  localStorage.setItem("cart", JSON.stringify(cart));
+}
+
+
+function showCart() {
+  store.style.display = "none";
+  ordersDiv.style.display = "none";
+  cartDiv.style.display = "block";
+  renderCart();
+}
+
+function renderCart() {
+  cartItems.innerHTML = "";
+  let total = 0;
+
+  cart.forEach(item => {
+    const itemTotal = item.price * item.qty;
+    total += itemTotal;
+
+    const div = document.createElement("div");
+    div.className = "cart-item";
+    div.innerHTML = `
+      <div>
+        <strong>${item.name}</strong><br>
+        $${item.price.toFixed(2)} × ${item.qty} = $${itemTotal.toFixed(2)}
+      </div>
+      <div>
+        <button onclick="changeQty('${item.name}', 1)">+</button>
+        <button onclick="changeQty('${item.name}', -1)">−</button>
+        <button onclick="removeItem('${item.name}')">❌</button>
+      </div>
+    `;
+
+    cartItems.appendChild(div);
+  });
+
+  totalDiv.textContent = "Total: $" + total.toFixed(2);
+}
+
+
+function checkout() {
+  if (cart.length === 0) {
+    alert("Cart is empty");
+    return;
+  }
+
+  const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
+
+  orders.push({
+    items: cart,
+    total,
+    date: new Date().toLocaleString()
+  });
+
+  localStorage.setItem("orders", JSON.stringify(orders));
+  cart = [];
+  saveCart();
+
+  alert("Order placed!");
+  showOrders();
+}
+
+/* ---------- ORDERS ---------- */
+
+function showOrders() {
+  store.style.display = "none";
+  cartDiv.style.display = "none";
+  ordersDiv.style.display = "block";
+
+  orderList.innerHTML = "";
+
+  orders.forEach(o => {
+    const div = document.createElement("div");
+    div.className = "cart-item";
+    div.innerHTML = `
+      <div>
+        <strong>${o.date}</strong><br>
+        Total: $${o.total.toFixed(2)}
+      </div>
+    `;
+    orderList.appendChild(div);
+  });
+}
+
+function back() {
+  store.style.display = "block";
+  cartDiv.style.display = "none";
+  ordersDiv.style.display = "none";
+}
+</script>
+
+
+</body>
+</html>
